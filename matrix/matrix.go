@@ -20,24 +20,20 @@ func (a Matrix2d) Mult(b Matrix2d) Matrix2d{
         for i := 0; i < length; i++{
                 col = a.getColumn(i)
                 for j := 0; j < length; j++{
-                        go innerprod(col, b.Matrix[j*cols:j*cols+cols], ch)
+			go func(coll []float64, row []float64, r int, c int, cha chan float64){
+				result := 0.0
+				for k:=0; k< len(coll); k++{
+					result += coll[k] * row[k]
+				}
+				results[r*cols+c] = result
+				cha<-1
+			}(col, b.Matrix[j*cols:j*cols+cols], i, j, ch)
                 }
         }
-        for i := 0; i < length; i++{
-                for j := 0; j < length; j++{
-                        results[i*cols + j] = <-ch
-                }
-        }
+
+	<-ch
 
         return Matrix2d{rows, cols, results}
-}
-
-func innerprod(c []float64, r []float64, ch chan float64){
-        result := 0.0
-        for i := 0; i < len(c); i++{
-                result += c[i] * r[i]
-        }
-        ch <- result
 }
 
 func (m Matrix2d) getColumn(col int) []float64{
